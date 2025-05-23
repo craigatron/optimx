@@ -11,10 +11,6 @@ def generate_node_names(distance_matrix: Union[List, ndarray]) -> List[str]:
     node_names = [alphabet[i] for i in range(num_nodes)]
     return node_names
 
-def generate_node_coordinates(num_nodes: int, node_names: List[str]) -> dict:
-    """Generates coordinates for nodes in a circular layout."""
-    angle = 2 * np.pi / num_nodes
-    return {node_names[i]: (np.cos(i * angle), np.sin(i * angle)) for i in range(num_nodes)}
 
 def generate_square_distances(n_cities: int) -> ndarray:
     """Generates random distances between cities."""

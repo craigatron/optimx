@@ -1,11 +1,10 @@
 import numpy as np
 from numpy import ndarray
 from typing import List, Union, Optional, Literal, Iterable, Tuple
-from .tsp.solver import TspSolver
-from .tsp.visual import plot_tsp_route_matplot
-from .knapsack.solver import KnapsackSolver
+from .tsp.factory import TSPFactory
+from .tsp.visual import TSPVisualizer
+from .knapsack.factory import KnapsackFactory
 from .ant.solver import AntColonyOptimization
-from .utils import generate_node_coordinates
 
 
 def solve_tsp(
@@ -14,7 +13,31 @@ def solve_tsp(
         node_names: Optional[List[str]] = None,
         start_node: Optional[Union[int, str]] = None,
         cycle: bool = False
-        ) -> List[Union[int, str]]:
+        ) -> Tuple[List[Union[int, str]], float]:
+    """
+    Solve the Travelling Salesman Problem (TSP) using the specified algorithm.
+
+    Args:
+        distance_matrix (Union[List, ndarray]): A square matrix representing the distances between nodes.
+        algorithm (Literal[brute, nearest_neighbour, dynamic_programming, branch_and_bound], optional): The algorithm to use.
+        node_names (Optional[List[str]], optional): The names of the nodes. Defaults to None.
+        start_node (Optional[Union[int, str]], optional): The starting node. Defaults to None. If None, the first node is used.
+        cycle (bool, optional): Whether to return to the starting node. Defaults to False.
+
+    Returns:
+        Tuple[List[Union[int, str]], float]: The best route and the total distance.
+
+    Examples:
+        >>> distance_matrix = [
+        ...     [0, 10, 15, 20],
+        ...     [10, 0, 35, 25],
+        ...     [15, 35, 0, 30],
+        ...     [20, 25, 30, 0]
+        ... ]
+        >>> solve_tsp(distance_matrix, algorithm="brute")
+        ([0, 1, 3, 2], 65.0
+        
+    """
     
     if not isinstance(distance_matrix, (list, ndarray)):
         raise ValueError("distance_matrix must be a list or numpy array")
@@ -45,89 +68,86 @@ def solve_tsp(
                 start_node = node_names.index(start_node)
         else:
             raise ValueError("start_node must be an integer or string")
+    else:
+        start_node = 0    
+    
         
     if not isinstance(cycle, bool):
         raise ValueError("cycle must be a boolean")
     
-    solver = TspSolver()
-    best_route = solver.solve_problem(distance_matrix, algorithm, start_node, cycle)
+    factory = TSPFactory()
+    best_route, best_cost = factory.apply_solver(distance_matrix, algorithm, start_node, cycle)
 
     if node_names:
         best_route = [node_names[i] for i in best_route]
     
-    return best_route
-
-
-def calculate_tsp_distance_by_route(
-        route: List, 
-        distance_matrix: Union[List, ndarray],
-        node_names: Optional[List[str]]=None
-        ) -> float:
-    
-    if node_names:
-        indexes = [node_names.index(node) for node in route]
-    else:
-        indexes = route
-    
-    total_distance = 0
-    for i in range(len(route) - 1):
-        total_distance += distance_matrix[indexes[i]][indexes[i + 1]]
-    return total_distance
-
+    return best_route, float(best_cost)
 
 def plot_tsp_route(
         route: List[Union[str, int]], 
         node_names: Optional[List[str]] = None,
         node_coordinates: Optional[dict] = None,
         start_node: Optional[Union[int, str]] = None,
-        cycle: bool = True
+        cycle: bool = False
         ) -> None:
-    
-    if cycle:
-        route = route[:-1]
+    """
+    Plot a TSP route.
 
-    if node_names is None:
-        node_names = list(range(len(route)))
-    else:
-        route = [node_names.index(node) for node in route]
-        
-    if node_coordinates is None:
-        node_coordinates = generate_node_coordinates(len(route), node_names)
+    Args:
+        route (List[Union[str, int]]): The route to plot. Example: [0, 1, 2, 3]
+        node_names (Optional[List[str]], optional): The names of the nodes. Defaults to None.
+        node_coordinates (Optional[dict], optional): The coordinates of the nodes. Defaults to None.
+        start_node (Optional[Union[int, str]], optional): The starting node. Defaults to None.
+        cycle (bool, optional): Whether the route contains a cycle. Defaults to False.
 
-    if node_names is not None:
-        if not isinstance(node_names, list):
-            raise ValueError("node_names must be a list")
-        if len(node_names) != len(route):
-            raise ValueError("node_names must have the same length as route")
+    Examples:
+        >>> route = [0, 1, 3, 2]
+        >>> node_names = ["A", "B", "C", "D"]
+        >>> node_coordinates = {"A": (0, 0), "B": (1, 1), "C": (2, 0), "D": (1, -1)}
+        >>> plot_tsp_route(route, node_names, node_coordinates, start_node="A", cycle=False)
+    """
     
-    if len(route) != len(node_coordinates):
-        raise ValueError("route and node_coordinates must have the same length")
-    
-    if start_node is not None:
-        if isinstance(start_node, int):
-            if start_node < 0 or start_node >= len(route):
-                raise ValueError("start_node must be a valid index")
-        elif isinstance(start_node, str):
-            if start_node not in node_names:
-                raise ValueError("start_node must be a valid node name")
-            else:
-                start_node = node_names.index(start_node)
-        else:
-            raise ValueError("start_node must be an integer or string")
-        
     if not isinstance(cycle, bool):
         raise ValueError("cycle must be a boolean")
     
-    plot_tsp_route_matplot(route, node_names, node_coordinates, start_node, cycle)
+    if cycle:
+        route = route[:-1]
+    if start_node is None:
+        if node_names:
+            start_node = node_names[0]
+        else:
+            start_node = 0
+
+    plotter = TSPVisualizer(route, node_names, node_coordinates, start_node, cycle)
+    plotter.plot()
 
     return
 
 def solve_knapsack(
-        weights: Iterable[float], 
-        values: Iterable[float], 
+        weights: List[float], 
+        values: List[float], 
         capacity: float, 
         algorithm: Literal["brute", "greedy", "dynamic_programming"] = "dynamic_programming"
-        ) -> List[int]:
+        ) -> Tuple[List[int], float]:
+    """
+    Solve the 0-1 Knapsack Problem using the specified algorithm.
+
+    Args:
+        weights (List[float]): Weights of the items. Must be the same length as values.
+        values (List[float]):  Values of the items. Must be the same length as weights.
+        capacity (float): The maximum weight that the knapsack can hold.
+        algorithm (Literal[brute, greedy, dynamic_programming], optional): The algorithm to use. Defaults to dynamic_programming.
+
+    Returns:
+        Tuple[List[int], float]: The indices of the items to include in the knapsack and the total value.
+    
+    Examples:
+        >>> weights = [2, 3, 4, 5]
+        >>> values = [3, 4, 5, 6]
+        >>> capacity = 5
+        >>> solve_knapsack(weights, values, capacity, algorithm="greedy")
+        ([0, 1], 7)
+    """
     
     if not isinstance(weights, list):
         raise ValueError("weights must be a list")
@@ -141,14 +161,16 @@ def solve_knapsack(
     if not isinstance(algorithm, str):
         raise ValueError("algorithm must be a string")
     
-    solver = KnapsackSolver()
-    best_combination, max_value = solver.solve_problem(weights, values, capacity, algorithm)
+    factory = KnapsackFactory()
+    best_combination, max_value = factory.apply_solver(weights, values, capacity, algorithm)
+
+    if not isinstance(best_combination, list):
+        best_combination = list(best_combination)
     
     return best_combination, max_value
 
-
 def solve_ant_colony(
-        distances: ndarray, 
+        distance_matrix: ndarray, 
         n_ants: int, 
         n_best: int, 
         n_iterations: int, 
@@ -157,18 +179,34 @@ def solve_ant_colony(
         beta: float=1, 
         Q: float=1
         ) -> List[Tuple[int, int]]:
+    """
+    Solve the Travelling Salesman Problem using Ant Colony Optimization.
+
+    Args:
+        distance_matrix (ndarray): A square matrix representing the distances between nodes.
+        n_ants (int): The number of ants to use.
+        n_best (int): The number of best ants to deposit pheromone.
+        n_iterations (int): The number of iterations to run.
+        decay (float): The pheromone decay rate.
+        alpha (float, optional): A parameter for the pheromone influence. Defaults to 1.
+        beta (float, optional): A parameter for the distance influence. Defaults to 1.
+        Q (float, optional): A parameter for the pheromone update. Defaults to 1.
+
+    Returns:
+        List[Tuple[int, int]]: The best route found by the algorithm.
+    """
     
-    if not isinstance(distances, np.ndarray):
+    if not isinstance(distance_matrix, np.ndarray):
         raise TypeError("distances must be a NumPy array.")
-    if distances.shape[0] != distances.shape[1]:
+    if distance_matrix.shape[0] != distance_matrix.shape[1]:
         raise ValueError("Distance matrix must be square.")
-    if np.any(distances < 0):
+    if np.any(distance_matrix < 0):
         raise ValueError("Distances cannot be negative.")
     if not (0 < decay <= 1):
         raise ValueError("Decay must be in the range (0, 1].")
     if any(param <= 0 for param in [n_ants, n_best, n_iterations]):
         raise ValueError("n_ants, n_best, and n_iterations must be positive integers.")
     
-    solver = AntColonyOptimization(distances, n_ants, n_best, n_iterations, decay, alpha, beta, Q)
+    solver = AntColonyOptimization(distance_matrix, n_ants, n_best, n_iterations, decay, alpha, beta, Q)
     shortest_path = solver.solve_problem()
     return shortest_path

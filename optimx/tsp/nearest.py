@@ -1,22 +1,21 @@
 import math
+import numpy as np
+from typing import List ,Tuple
+from .base import TSPSolver
 
-class TSPNearestNeighbor:
 
-    def __init__(self, distance_matrix):
-        self.distance_matrix = distance_matrix
-        self.num_nodes = len(distance_matrix)
+class TSPNearestNeighbor(TSPSolver):
 
-    def solve(self, start_node=None, cycle=True):
+    def __init__(self, distance_matrix, start_node, cycle = True):
+        super().__init__(distance_matrix, start_node, cycle)
+
+    def solve(self):
         visited = [False] * self.num_nodes
         tour = []
         total_distance = 0
 
-        # If start_node is None, default to the first node (0)
-        if start_node is None:
-            start_node = 0
-
         # Start at the specified node
-        current_node = start_node
+        current_node = self.start_node
         tour.append(current_node)
         visited[current_node] = True
 
@@ -40,8 +39,8 @@ class TSPNearestNeighbor:
             total_distance += nearest_distance
 
         # If cycle is True, complete the tour by returning to the starting node
-        if cycle:
-            tour.append(start_node)
-            total_distance += self.distance_matrix[current_node][start_node]
+        if self.cycle:
+            tour.append(self.start_node)
+            total_distance += self.distance_matrix[current_node][self.start_node]
 
-        return tour
+        return tour, total_distance

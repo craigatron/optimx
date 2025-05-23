@@ -1,8 +1,18 @@
+## [0.0.4] | 23.05.2025
+
+### Changed
+
+- Code refactored.
+
 ## [0.0.4] | 31.01.2025
 
 ### Fixed
 
 - The `__init__.py` file was missing in the `ant` module and has now been added.
+
+### Removed
+
+- `calculate_tsp_distance_by_route` method has been removed. It is calculated implictly.
 
 ## [0.0.3] | 31.01.2025
 

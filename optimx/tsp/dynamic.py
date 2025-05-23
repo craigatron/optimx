@@ -1,23 +1,37 @@
-class TSPSolverMemoization:
-    def __init__(self, distance_matrix):
-        self.distance_matrix = distance_matrix
-        self.num_nodes = len(distance_matrix)
+from typing import List ,Tuple
+from .base import TSPSolver
+
+
+class TSPSolverMemoization(TSPSolver):
+
+    def __init__(self, distance_matrix, start_node, cycle = True):
+        super().__init__(distance_matrix, start_node, cycle)
+        self.memo = {}
+        
+    def solve(self):
+        # Initialize the remaining nodes (excluding the start node)
+        remaining_nodes = list(range(self.num_nodes))
+        remaining_nodes.remove(self.start_node)
+
+        # Reset memoization dictionary
         self.memo = {}
 
-    def _tsp_memoization_with_path(self, current_node, remaining_nodes, path=None, cycle=True):
-        """
-        Solves the TSP using dynamic programming with memoization.
+        # Solve the TSP with memoization
+        min_distance, min_path = self._tsp_memoization_with_path(self.start_node, remaining_nodes, path=[self.start_node], cycle=self.cycle)
 
-        Parameters:
-            - current_node: The node currently being visited.
-            - remaining_nodes: The nodes that are yet to be visited.
-            - path: List representing the current path taken.
-            - cycle: Whether to return to the starting node at the end (True) or not (False).
-
-        Returns:
-            - min_distance: Minimum distance for the TSP path.
-            - min_path: The path taken for this minimum distance.
-        """
+        # If cycle is True, add start node to the end to complete the cycle
+        if self.cycle:
+            min_path.append(self.start_node)
+            
+        return min_path, min_distance
+    
+    def _tsp_memoization_with_path(
+            self, 
+            current_node: int, 
+            remaining_nodes: List[int], 
+            path: List[int]=None, 
+            cycle: bool=True
+            ) -> Tuple[float, List[int]]:
         if path is None:
             path = []
 
@@ -52,37 +66,7 @@ class TSPSolverMemoization:
 
         # Memoize the result
         self.memo[(current_node, remaining_nodes)] = min_distance
-        
+
         return min_distance, min_path
 
-    def solve(self, start_node=None, cycle=True):
-        """
-        Solves the TSP by initializing parameters and calling the recursive memoized function.
-
-        Parameters:
-            - start_node: The node to start from (default is 0).
-            - cycle: Whether to return to the starting node at the end (True) or not (False).
-
-        Returns:
-            - min_path: The path taken for the minimum distance.
-            - min_distance: Minimum distance for the TSP path.
-        """
-        # If start_node is None, default to the first node (0)
-        if start_node is None:
-            start_node = 0
-        
-        # Initialize the remaining nodes (excluding the start node)
-        remaining_nodes = list(range(self.num_nodes))
-        remaining_nodes.remove(start_node)
-
-        # Reset memoization dictionary
-        self.memo = {}
-
-        # Solve the TSP with memoization
-        min_distance, min_path = self._tsp_memoization_with_path(start_node, remaining_nodes, path=[start_node], cycle=cycle)
-
-        # If cycle is True, add start node to the end to complete the cycle
-        if cycle:
-            min_path.append(start_node)
-            
-        return min_path
+    

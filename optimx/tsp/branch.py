@@ -1,46 +1,32 @@
 import numpy as np
+from .base import TSPSolver
 
 
-class TSPSolverBranchAndBound:
-    def __init__(self, distance_matrix):
-        self.distance_matrix = distance_matrix
-        self.num_nodes = len(distance_matrix)
+class TSPBranchBound(TSPSolver):
+
+    def __init__(self, distance_matrix, start_node, cycle = True):
+        super().__init__(distance_matrix, start_node, cycle)
         self.best_path = None
         self.best_cost = np.inf
-
-    def solve(self, start_node=None, cycle=True):
-        """
-        Solves the TSP using the branch-and-bound approach.
-
-        Parameters:
-            - start_node: The node to start from (default is 0).
-            - cycle: Whether to return to the starting node at the end (True) or not (False).
-
-        Returns:
-            - best_path: List representing the optimal path taken.
-            - best_cost: The minimum cost for this path.
-        """
-        # Set default start node to 0 if not provided
-        if start_node is None:
-            start_node = 0
-
+        
+    def solve(self):
         # Reset best path and cost for fresh solving
         self.best_path = None
         self.best_cost = np.inf
 
         # Initialize the stack with the root node
-        stack = [(start_node, [start_node], {start_node}, 0)]
+        stack = [(self.start_node, [self.start_node], {self.start_node}, 0)]
         
         while stack:
             current_node, path, visited, current_cost = stack.pop()
             
             # If all nodes have been visited, check if this path is the best
             if len(path) == self.num_nodes:
-                if cycle:
+                if self.cycle:
                     # Complete the cycle by returning to the start node
-                    current_cost += self.distance_matrix[path[-1]][start_node]
+                    current_cost += self.distance_matrix[path[-1]][self.start_node]
                 if current_cost < self.best_cost:
-                    self.best_path = path + ([start_node] if cycle else [])
+                    self.best_path = path + ([self.start_node] if self.cycle else [])
                     self.best_cost = current_cost
             else:
                 # Generate children nodes by considering all unvisited nodes
@@ -53,4 +39,4 @@ class TSPSolverBranchAndBound:
                     if new_cost < self.best_cost:
                         stack.append((next_node, new_path, visited | {next_node}, new_cost))
         
-        return self.best_path
+        return self.best_path, self.best_cost
