@@ -1,4 +1,11 @@
-## [0.0.4] | 23.05.2025
+## [0.0.6] | 23.05.2025
+
+### Added
+
+- Shortest Path module and Dijkstra method were introduced.
+- `solve_shortest_path` function was added to the API.
+
+## [0.0.5] | 23.05.2025
 
 ### Changed
 

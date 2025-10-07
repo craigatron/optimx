@@ -87,6 +87,19 @@ shortest_paths = ox.solve_ant_colony(distances, n_ants, n_best, n_iteration, dec
 print("Shortest paths:", shortest_paths)
 ```
 
+The **shortest path problem** in a graph can be solved using **Dijkstra's algorithm**.
+
+```python
+distance_matrix = generate_square_distances(10)
+
+names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+
+path, dist = ox.solve_shortest_path(distance_matrix, start_node="A", goal_node="D", node_names=names)
+
+print(f"Shortest path: {path}")
+print(f"Distance: {dist}")
+```
+
 ## License
 
 OptimX is licensed under the MIT License. See [LICENSE](Licence.md) for more details.
@@ -100,3 +113,7 @@ We welcome contributions to OptimX! Please see [CONTRIBUTING.md](CONTRIBUTING.md
 For any questions or feedback, please contact the author:
 
 - **Okan Yenigün** - [okanyenigun@gmail.com](mailto:okanyenigun@gmail.com)
+
+```
+
+```
